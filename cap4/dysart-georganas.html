@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="../utils.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../style.css">
+
+    <title>Algoritmo de Dysart-Georganas</title>
+</head>
+<body>
+    <!-- Intro/Explicacion -->
+    <h1>Algoritmo de Dysart-Georganas</h1>
+    <a target="_blank" href="https://jincera.github.io/LibroDisRedes/dise%C3%B1o-l%C3%B3gico-de-la-red.html#algoritmo-de-dysart-georganas">Ver en Notas</a>
+    <h2>Algoritmo</h2>
+    <ol>
+        <li>
+            Encuentra los K vecinos más cercanos para cada nodo.
+        </li>
+        <li>
+            Para cada nodo, encuentra su frecuencia = cuántas veces aparece en la lista de vecinos más cercanos + 1. 
+        </li>
+        <li>
+            Ahora cuenta cuántas veces ocurre (S_j) cada <b>frecuencia</b> (j) y calcula (donde N es el no. de nodos):
+            <br>
+            <img src="assets/d-g-v.png" width="200">
+        </li>
+        <li>Los nodos contendientes son aquellos cuya frecuencia es mayor o igual a v.</li>
+    </ol>
+    <br>
+
+    <!-- Input de Matriz de Adyacencia -->
+    <h2>Calculadora</h2>
+    Número de nodos: <input id="n_nodos_input" onchange="update_matrix_input()"  type="number" value="10"/>
+    Simétrica: <input id="simetric_matrix"  onchange="update_matrix_input()" type="checkbox"/>
+    <input type="button" value="Llena al azar" onclick="llena_input_al_azar()"/>
+    <input type="button" value="Llena con ejemplo" onclick="llena_con_ejemplo()"/>
+
+    <br><br>
+    <div id="matrix_input"></div>
+    <br><br>
+
+    <!-- Inputs particulares al algoritmo -->
+    K = <input type="number" id="k" value="3"/>
+    <input type="button" value="Resolver" onclick="resolver()"/>
+    <br><br>
+
+    <div id="resultados">
+        <div id="tabla_vecindad"></div>
+        <br>
+        <div id="tabla_frecuencia"></div>
+        <br>
+        <div id="v"></div>
+        <div id="candidatos"></div>
+    </div>
+
+    <br><br><br>
+
+
+
+    <script>
+        function update_matrix_input(){
+            // Borramos todos los hijos antes de agregar
+            document.getElementById("matrix_input").innerHTML="";
+
+            let es_simetrica=document.getElementById("simetric_matrix").checked;
+            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+            loadMatrixInput("matrix_input",n_nodos,es_simetrica);
+        }
+        function llena_input_al_azar(){
+            let es_simetrica=document.getElementById("simetric_matrix").checked;
+            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+            llena_al_azar(n_nodos,es_simetrica,n_nodos);
+        }
+
+        function llena_con_ejemplo(){
+            let matriz_ejemplo=[
+                [0, 3, 0, 0, 3, 4, 0, 0, 0, 0],
+                [3, 0, 2, 2, 1, 0, 0, 0, 0, 0],
+                [0, 2, 0, 2, 2, 0, 0, 0, 0, 0],
+                [0, 2, 2, 0, 1, 2, 5, 3, 0, 0],
+                [3, 1, 2, 1, 0, 1, 0, 0, 0, 0],
+                [4, 0, 0, 2, 1, 0, 3, 3, 0, 0],
+                [0, 0, 0, 5, 0, 3, 0, 1, 5, 4],
+                [0, 0, 0, 3, 0, 3, 1, 0, 4, 6],
+                [0, 0, 0, 0, 0, 0, 5, 4, 0, 2],
+                [0, 0, 0, 0, 0, 0, 4, 6, 2, 0]
+            ];
+            llenar_de_arr(matriz_ejemplo);
+
+        }
+
+        function indices_de_vecinos(renglon){
+            let out=[];
+            for(let i=0;i<renglon.length;i++){
+                if(renglon[i]>0){
+                    out.push(i);
+                }
+            }
+            return out;
+        }
+
+        function despliega_tabla_vecindad(vecindad,frecuencia){
+            let div=document.getElementById("tabla_vecindad");
+
+            let tabla=document.createElement("table");
+
+            let header=document.createElement("tr");
+            for(let h of ["Nodo","Vecinos","Frecuencia"]){
+                let casilla=document.createElement("th");
+                casilla.innerHTML=h;
+                header.appendChild(casilla);
+            }
+            tabla.appendChild(header);
+
+            for(let nodo in vecindad){
+                let renglon=document.createElement("tr");
+                // Nodo
+                let casilla=document.createElement("td");
+                casilla.innerHTML=nodo;
+                renglon.appendChild(casilla);
+
+                // Vecinos
+                casilla=document.createElement("td");
+                casilla.innerHTML=vecindad[nodo].join(", ");
+                renglon.appendChild(casilla);
+
+                // Frecuencia
+                casilla=document.createElement("td");
+                casilla.innerHTML=frecuencia[nodo];
+                renglon.appendChild(casilla);
+
+                tabla.appendChild(renglon);
+            }
+            div.appendChild(tabla);
+
+        }
+
+        function despliega_tabla_frecuencia(tabla_frecuencia){
+            let div=document.getElementById("tabla_frecuencia");
+
+            let tabla=document.createElement("table");
+
+            let header=document.createElement("tr");
+            for(let h of ["J","S_j"]){
+                let casilla=document.createElement("th");
+                casilla.innerHTML=h;
+                header.appendChild(casilla);
+            }
+            tabla.appendChild(header);
+
+            for(let freq in tabla_frecuencia){
+                let renglon=document.createElement("tr");
+                // J
+                let casilla=document.createElement("td");
+                casilla.innerHTML=freq;
+                renglon.appendChild(casilla);
+
+                // S_j
+                casilla=document.createElement("td");
+                casilla.innerHTML=tabla_frecuencia[freq];
+                renglon.appendChild(casilla);
+
+                tabla.appendChild(renglon);
+            }
+            div.appendChild(tabla);
+
+        }
+
+        
+
+        function resolver(){
+            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+            let k=parseInt(document.getElementById("k").value);
+
+            let arr=get_matrix_from_input(n_nodos);
+            console.log(arr);
+
+            let vecindad={};
+            let frecuencia={};
+
+            for(let i=0;i<n_nodos;i++){
+                let nodo=i+1;
+                let renglon=arr[i];
+
+                // Obtenemos indices de vecinos (aquellas casillas > 0)
+                let vecinos_ix=indices_de_vecinos(renglon);
+
+                // Ordenamos indices de vecinos por costo ascendiente
+                vecinos_ix=vecinos_ix.sort((a,b)=>renglon[a]-renglon[b]);
+
+                // Tomamos solo los primeros k
+                vecinos_ix=vecinos_ix.slice(0,k)
+
+                // Volvemos a ordenar (para claridad al desplegarse)
+                vecinos_ix.sort()
+
+                // Le aumentamos 1 al indice para referirnos al numero de nodo
+                let vecinos=[];
+                for(let j=0;j<vecinos_ix.length;j++)
+                    vecinos.push(vecinos_ix[j]+1);
+
+                // Checamos suficientes vecinos
+                if(vecinos.length!=k){
+                    alert("No hay sufientes vecinos para el nodo "+nodo+" para satisfacer k = "+k);
+                    return NaN;
+                }
+
+                console.log(nodo,vecinos);
+                // Guardamos la lista de vecinos en vecindad
+                vecindad[nodo]=vecinos;
+
+                // Y actualizamos la frecuencia
+                // Del nodo actual 
+                if(nodo in frecuencia){
+                        frecuencia[nodo]++;
+                    }else{
+                        frecuencia[nodo]=1;
+                    }
+                // Y de los vecinos
+                for(let vecino of vecinos){
+                    if(vecino in frecuencia){
+                        frecuencia[vecino]++;
+                    }else{
+                        frecuencia[vecino]=1;
+                    }
+                }
+
+            }
+            console.log(vecindad);
+            console.log(frecuencia);
+
+            despliega_tabla_vecindad(vecindad,frecuencia);
+
+            tabla_frecuencia={}
+            for(let nodo in frecuencia){
+                let freq=frecuencia[nodo];
+                if(freq in tabla_frecuencia){
+                    tabla_frecuencia[freq]++;
+                }else{
+                    tabla_frecuencia[freq]=1;
+                }
+            }
+            console.log(tabla_frecuencia);
+            despliega_tabla_frecuencia(tabla_frecuencia);
+
+            // Calculamos v
+            let v=0
+            for(let valor in tabla_frecuencia){
+                let peso=tabla_frecuencia[valor];
+                v+=(valor*peso);
+            }
+            console.log(v)
+            v=v/n_nodos;
+            v=Math.floor(v);
+            v+=1;
+            document.getElementById("v").innerHTML="v = "+v;
+
+            // Y los nodos candidatos (aquellos con freq >= v)
+            candidatos=[];
+            for(let nodo in frecuencia){
+                let freq=frecuencia[nodo];
+                if(freq>=v){
+                    candidatos.push(nodo);
+                }
+            }
+            candidatos.sort();
+            document.getElementById("candidatos").innerHTML="Candidatos = "+candidatos.join(", ");
+
+
+
+        }
+
+        // MAIN
+        update_matrix_input();
+    </script>
+
+
+    
+</body>
+</html>

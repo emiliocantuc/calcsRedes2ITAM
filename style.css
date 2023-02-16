@@ -1,0 +1,17 @@
+
+input[type='number']{
+    width: 50px;
+} 
+
+
+#resultados table, #resultados td, #resultados th {
+    border: 1px solid black;
+}
+#resultados table {
+    border-collapse: collapse;
+}
+
+#resultados td,#resultados th {
+    text-align: center;
+    padding: 5px;
+  }
