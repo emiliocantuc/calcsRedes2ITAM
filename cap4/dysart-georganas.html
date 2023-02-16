@@ -107,6 +107,9 @@
         function despliega_tabla_vecindad(vecindad,frecuencia){
             let div=document.getElementById("tabla_vecindad");
 
+            // Primero vaciamos
+            div.innerHTML="";
+
             let tabla=document.createElement("table");
 
             let header=document.createElement("tr");
@@ -143,6 +146,9 @@
         function despliega_tabla_frecuencia(tabla_frecuencia){
             let div=document.getElementById("tabla_frecuencia");
 
+            // Primero vaciamos
+            div.innerHTML="";
+            
             let tabla=document.createElement("table");
 
             let header=document.createElement("tr");
