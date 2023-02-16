@@ -5,6 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+    <!-- JS Utils -->
     <script src="../utils.js"></script>
 
     <!-- CSS -->
@@ -148,7 +149,7 @@
 
             // Primero vaciamos
             div.innerHTML="";
-            
+
             let tabla=document.createElement("table");
 
             let header=document.createElement("tr");
@@ -177,14 +178,11 @@
 
         }
 
-        
-
         function resolver(){
             let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
             let k=parseInt(document.getElementById("k").value);
 
             let arr=get_matrix_from_input(n_nodos);
-            console.log(arr);
 
             let vecindad={};
             let frecuencia={};
@@ -216,7 +214,6 @@
                     return NaN;
                 }
 
-                console.log(nodo,vecinos);
                 // Guardamos la lista de vecinos en vecindad
                 vecindad[nodo]=vecinos;
 
@@ -237,8 +234,6 @@
                 }
 
             }
-            console.log(vecindad);
-            console.log(frecuencia);
 
             despliega_tabla_vecindad(vecindad,frecuencia);
 
@@ -251,7 +246,7 @@
                     tabla_frecuencia[freq]=1;
                 }
             }
-            console.log(tabla_frecuencia);
+
             despliega_tabla_frecuencia(tabla_frecuencia);
 
             // Calculamos v
@@ -260,7 +255,7 @@
                 let peso=tabla_frecuencia[valor];
                 v+=(valor*peso);
             }
-            console.log(v)
+
             v=v/n_nodos;
             v=Math.floor(v);
             v+=1;

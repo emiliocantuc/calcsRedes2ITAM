@@ -59,7 +59,6 @@ function loadMatrixInput(input_div_id,n_nodos,es_simetrica){
                   });
             }
             casilla.appendChild(casilla_input);
-            console.log(casilla_input.id);
             renglon.appendChild(casilla);
         }
         tabla.appendChild(renglon);
