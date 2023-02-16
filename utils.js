@@ -4,7 +4,7 @@
  * @param {int} n_nodos El numero de nodos a ingresar.
  * @param {boolean} es_simetrica Si la matriz es simetrica o no.
  */
-function loadMatrixInput(input_div_id,n_nodos,es_simetrica){
+function despliega_matriz_entrada(input_div_id,n_nodos,es_simetrica){
 
     // Div en donde colocamos la tabla
     let div=document.getElementById(input_div_id);
@@ -66,6 +66,13 @@ function loadMatrixInput(input_div_id,n_nodos,es_simetrica){
     div.appendChild(tabla);
 }
 
+/**
+ * Llena matriz de entrada con enteros al azar en el rango
+ * [0,max].
+ * @param {int} n_nodos Numero de nodos
+ * @param {boolean} es_simetrica Si la matriz de entrada es simetrica o no
+ * @param {int} max Cota superior del rango
+ */
 function llena_al_azar(n_nodos,es_simetrica,max){
     for(let i=0;i<n_nodos;i++){
         for(let j=0;j<n_nodos;j++){
@@ -75,6 +82,10 @@ function llena_al_azar(n_nodos,es_simetrica,max){
     }
 }
 
+/**
+ * Llena matriz de entrada con los valores de un arreglo
+ * @param {Array} arr Arreglo con valores con los cuales llenar
+ */
 function llenar_de_arr(arr){
     for(let i=0;i<arr.length;i++){
         for(let j=0;j<arr[i].length;j++){
@@ -83,8 +94,12 @@ function llenar_de_arr(arr){
     }
 }
 
-
-function get_matrix_from_input(n_nodos){
+/**
+ * Lee, parsea y regresa la matriz de entrada.
+ * @param {int} n_nodos El numero de nodos
+ * @returns {Array} La matriz parseada a floatantes.
+ */
+function cargar_matriz_de_entrada(n_nodos){
     let arr=[];
     for(let i=0;i<n_nodos;i++){
         let renglon=[];
@@ -96,14 +111,14 @@ function get_matrix_from_input(n_nodos){
                     let v=parseFloat(document.getElementById(i+","+j).value);
                     if(isNaN(v) || v<0){
                         alert("Valor invalido en casilla "+(i+1)+","+(j+1));
-                        return NaN;
+                        return null;
                     }else{
                         renglon.push(v);
                     }
                 }
             }catch(e){
                 alert("Valor invalido en casilla "+(i+1)+","+(j+1));
-                return NaN;
+                return null;
             }
         }
         arr.push(renglon);

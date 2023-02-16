@@ -61,23 +61,33 @@
 
     <br><br><br>
 
-
-
+    <!-- Script principal -->
     <script>
+        /**
+         * Actualiza las dimensiones y casillas habilitadas de la matriz de entrada.
+         * Se llamda cada que cambia el numero de nodos o si es simetrica.
+         */
         function update_matrix_input(){
             // Borramos todos los hijos antes de agregar
             document.getElementById("matrix_input").innerHTML="";
 
             let es_simetrica=document.getElementById("simetric_matrix").checked;
             let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
-            loadMatrixInput("matrix_input",n_nodos,es_simetrica);
+            despliega_matriz_entrada("matrix_input",n_nodos,es_simetrica);
         }
+
+        /**
+         * Manda a llamar llena_al_azar con sus parametros.
+         */
         function llena_input_al_azar(){
             let es_simetrica=document.getElementById("simetric_matrix").checked;
             let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
             llena_al_azar(n_nodos,es_simetrica,n_nodos);
         }
 
+        /**
+         * Llena la matriz de entrada con el ejemplo de las notas.
+         */
         function llena_con_ejemplo(){
             let matriz_ejemplo=[
                 [0, 3, 0, 0, 3, 4, 0, 0, 0, 0],
@@ -95,6 +105,11 @@
 
         }
 
+        /**
+         * Regresa la lista de indices del arreglo que son mayores a 0.
+         * @param {Array} renglon Arreglo de posibles vecinos
+         * @returns {Array} Lista de indices mayores a cero.
+         */
         function indices_de_vecinos(renglon){
             let out=[];
             for(let i=0;i<renglon.length;i++){
@@ -105,6 +120,11 @@
             return out;
         }
 
+        /**
+         * Despliega la tabla de vecindad sobre el documento.
+         * @param {Object} dict 'vecindad' encontrado en resuelve()
+         * @param {Object} dict 'frecuencia' encontrado en resuelve().
+         */
         function despliega_tabla_vecindad(vecindad,frecuencia){
             let div=document.getElementById("tabla_vecindad");
 
@@ -144,6 +164,10 @@
 
         }
 
+        /**
+         * Despliega la tabla de frecuencia sobre el documento.
+         * @param {Object} dict 'tabla_frecuencia' encontrado en resuelve().
+         */
         function despliega_tabla_frecuencia(tabla_frecuencia){
             let div=document.getElementById("tabla_frecuencia");
 
@@ -178,13 +202,30 @@
 
         }
 
+        /**
+         * Callback del boton 'Resolver'. Lee entradas, aplica algoritmo
+         * y manda a escribir resultados.
+         */
         function resolver(){
-            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
-            let k=parseInt(document.getElementById("k").value);
+            let n_nodos=-1;
+            let k=-1;
+            try{
+                n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+                k=parseInt(document.getElementById("k").value);
+            }catch(e){
+                alert('Ingresa valores validos para Numero de nodos y/o K');
+                return null;
+            }
 
-            let arr=get_matrix_from_input(n_nodos);
+            // Leemos matriz de entrada
+            let arr=cargar_matriz_de_entrada(n_nodos);
+            if(arr==null){
+                return null;
+            }
 
+            // Nodo -> k vecinos mas cercanos
             let vecindad={};
+            // Nodo -> # de occurrencias en vecindades + 1
             let frecuencia={};
 
             for(let i=0;i<n_nodos;i++){
@@ -211,7 +252,7 @@
                 // Checamos suficientes vecinos
                 if(vecinos.length!=k){
                     alert("No hay sufientes vecinos para el nodo "+nodo+" para satisfacer k = "+k);
-                    return NaN;
+                    return null;
                 }
 
                 // Guardamos la lista de vecinos en vecindad
@@ -234,9 +275,10 @@
                 }
 
             }
-
+            // Desplegamos la tabla de vecindad
             despliega_tabla_vecindad(vecindad,frecuencia);
 
+            // Calculamos y desplegamos la tabla de frecuencia
             tabla_frecuencia={}
             for(let nodo in frecuencia){
                 let freq=frecuencia[nodo];
@@ -246,16 +288,14 @@
                     tabla_frecuencia[freq]=1;
                 }
             }
-
             despliega_tabla_frecuencia(tabla_frecuencia);
 
-            // Calculamos v
+            // Calculamos y desplegamos v
             let v=0
             for(let valor in tabla_frecuencia){
                 let peso=tabla_frecuencia[valor];
                 v+=(valor*peso);
             }
-
             v=v/n_nodos;
             v=Math.floor(v);
             v+=1;
@@ -271,9 +311,6 @@
             }
             candidatos.sort();
             document.getElementById("candidatos").innerHTML="Candidatos = "+candidatos.join(", ");
-
-
-
         }
 
         // MAIN
