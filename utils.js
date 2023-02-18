@@ -67,13 +67,36 @@ function despliega_matriz_entrada(input_div_id,n_nodos,es_simetrica){
 }
 
 /**
- * Llena matriz de entrada con enteros al azar en el rango
- * [0,max].
- * @param {int} n_nodos Numero de nodos
- * @param {boolean} es_simetrica Si la matriz de entrada es simetrica o no
- * @param {int} max Cota superior del rango
+ * Actualiza las dimensiones y casillas habilitadas de la matriz de entrada.
+ * Se llamda cada que cambia el numero de nodos o si es simetrica.
  */
-function llena_al_azar(n_nodos,es_simetrica,max){
+function update_matrix_input(){
+    // Borramos todos los hijos antes de agregar
+    document.getElementById("matrix_input").innerHTML="";
+
+    let es_simetrica=document.getElementById("simetric_matrix").checked;
+    try{
+        let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+        if(n_nodos<=0){
+            alert("Ingresa un entero positivo para el # de nodos");
+            return null;
+        }
+
+        despliega_matriz_entrada("matrix_input",n_nodos,es_simetrica);
+    }catch(e){
+        alert("Ingresa un entero positivo para el # de nodos");
+    }
+}
+
+/**
+ * Llena matriz de entrada con enteros al azar en el rango
+ * [0,n_nodos].
+ */
+function llena_al_azar(){
+    let es_simetrica=document.getElementById("simetric_matrix").checked;
+    let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+    let max=n_nodos;
+
     for(let i=0;i<n_nodos;i++){
         for(let j=0;j<n_nodos;j++){
             if((i==j) || (es_simetrica && i>j)) continue;
@@ -124,5 +147,75 @@ function cargar_matriz_de_entrada(n_nodos){
         arr.push(renglon);
     }
     return arr;
-
 }
+
+function genera_tabla(encabezado,arr,titulo,encabezado_vertical){
+    let tabla=document.createElement("table");
+
+    // Titulo
+    if(titulo!==undefined){
+        let cap=document.createElement("caption");
+        cap.innerHTML=titulo;
+        tabla.appendChild(cap);
+    }
+    // Encabezado
+    if(encabezado!==undefined){
+        let renglon=document.createElement("tr");
+        if(encabezado_vertical!==undefined){
+            let th=document.createElement("th");
+            th.innerHTML="";
+            renglon.appendChild(th);
+        }
+        for(let e of encabezado){
+            let th=document.createElement("th");
+            th.innerHTML=e;
+            renglon.appendChild(th);
+        }
+        tabla.appendChild(renglon);
+    }
+    // Cuerpo
+    for(let i=0;i<arr.length;i++){
+        let renglon=document.createElement("tr");
+
+        // Encabezado horizontal
+        if(encabezado_vertical!==undefined){
+            let th=document.createElement("th");
+            th.innerHTML=encabezado_vertical[i];
+            renglon.appendChild(th);
+        }
+
+        for(let j=0;j<arr[i].length;j++){
+            let td=document.createElement("td");
+            console.log(arr[i][j]);
+            td.innerHTML=arr[i][j];
+            renglon.appendChild(td);
+        }
+        tabla.appendChild(renglon);
+    }
+    return tabla;
+}
+
+function highlight_celdas(celdas){
+    for([i,j] of celdas){
+        document.getElementById(i+","+j).class="highlighted";
+    }
+}
+
+function matriz_de_ceros(rows,cols){
+    let arr=[];
+    for(let i=0;i<rows;i++){
+        arr[i]=[];
+        for(let j=0;j<cols;j++){
+            arr[i][j]=0;
+        }
+    }
+    return arr;
+}
+
+function quita_de_lista(arr,elem){
+    let index = arr.indexOf(elem);
+    if (index > -1) {
+        arr.splice(index, 1);
+    }
+}
+

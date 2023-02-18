@@ -38,7 +38,7 @@
     <h2>Calculadora</h2>
     Número de nodos: <input id="n_nodos_input" onchange="update_matrix_input()"  type="number" value="10"/>
     Simétrica: <input id="simetric_matrix"  onchange="update_matrix_input()" type="checkbox"/>
-    <input type="button" value="Llena al azar" onclick="llena_input_al_azar()"/>
+    <input type="button" value="Llena al azar" onclick="llena_al_azar()"/>
     <input type="button" value="Llena con ejemplo" onclick="llena_con_ejemplo()"/>
 
     <br><br>
@@ -64,28 +64,6 @@
     <!-- Script principal -->
     <script>
         /**
-         * Actualiza las dimensiones y casillas habilitadas de la matriz de entrada.
-         * Se llamda cada que cambia el numero de nodos o si es simetrica.
-         */
-        function update_matrix_input(){
-            // Borramos todos los hijos antes de agregar
-            document.getElementById("matrix_input").innerHTML="";
-
-            let es_simetrica=document.getElementById("simetric_matrix").checked;
-            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
-            despliega_matriz_entrada("matrix_input",n_nodos,es_simetrica);
-        }
-
-        /**
-         * Manda a llamar llena_al_azar con sus parametros.
-         */
-        function llena_input_al_azar(){
-            let es_simetrica=document.getElementById("simetric_matrix").checked;
-            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
-            llena_al_azar(n_nodos,es_simetrica,n_nodos);
-        }
-
-        /**
          * Llena la matriz de entrada con el ejemplo de las notas.
          */
         function llena_con_ejemplo(){
@@ -101,8 +79,11 @@
                 [0, 0, 0, 0, 0, 0, 5, 4, 0, 2],
                 [0, 0, 0, 0, 0, 0, 4, 6, 2, 0]
             ];
+            document.getElementById("n_nodos_input").value=10;
+            document.getElementById("k").value=3;
+            document.getElementById("simetric_matrix").checked=false;
+            update_matrix_input();
             llenar_de_arr(matriz_ejemplo);
-
         }
 
         /**
@@ -127,39 +108,19 @@
          */
         function despliega_tabla_vecindad(vecindad,frecuencia){
             let div=document.getElementById("tabla_vecindad");
-
             // Primero vaciamos
             div.innerHTML="";
-
-            let tabla=document.createElement("table");
-
-            let header=document.createElement("tr");
-            for(let h of ["Nodo","Vecinos","Frecuencia"]){
-                let casilla=document.createElement("th");
-                casilla.innerHTML=h;
-                header.appendChild(casilla);
-            }
-            tabla.appendChild(header);
-
+            // Armamos arreglo para generar tabla
+            let arr=[];
+            let i=0;
             for(let nodo in vecindad){
-                let renglon=document.createElement("tr");
-                // Nodo
-                let casilla=document.createElement("td");
-                casilla.innerHTML=nodo;
-                renglon.appendChild(casilla);
-
-                // Vecinos
-                casilla=document.createElement("td");
-                casilla.innerHTML=vecindad[nodo].join(", ");
-                renglon.appendChild(casilla);
-
-                // Frecuencia
-                casilla=document.createElement("td");
-                casilla.innerHTML=frecuencia[nodo];
-                renglon.appendChild(casilla);
-
-                tabla.appendChild(renglon);
+                arr[i]=[nodo,vecindad[nodo].join(', '),frecuencia[nodo]]
+                i++;
             }
+            // Generamos
+            let tabla=genera_tabla(["Nodo","Vecinos","Frecuencia"],arr,"Tabla de Vecindad");
+            tabla.className="con_borde";
+            // Escribimos
             div.appendChild(tabla);
 
         }
@@ -170,36 +131,19 @@
          */
         function despliega_tabla_frecuencia(tabla_frecuencia){
             let div=document.getElementById("tabla_frecuencia");
-
             // Primero vaciamos
             div.innerHTML="";
-
-            let tabla=document.createElement("table");
-
-            let header=document.createElement("tr");
-            for(let h of ["J","S_j"]){
-                let casilla=document.createElement("th");
-                casilla.innerHTML=h;
-                header.appendChild(casilla);
+            // Generamos arreglo para generar tabla
+            let arr=[];
+            let i=0;
+            for(let k in tabla_frecuencia){
+                arr[i]=[k,tabla_frecuencia[k]];
+                i++;
             }
-            tabla.appendChild(header);
-
-            for(let freq in tabla_frecuencia){
-                let renglon=document.createElement("tr");
-                // J
-                let casilla=document.createElement("td");
-                casilla.innerHTML=freq;
-                renglon.appendChild(casilla);
-
-                // S_j
-                casilla=document.createElement("td");
-                casilla.innerHTML=tabla_frecuencia[freq];
-                renglon.appendChild(casilla);
-
-                tabla.appendChild(renglon);
-            }
+            let tabla=genera_tabla(["J","S_j"],arr,"Tabla de Frecuencia");
+            tabla.className="con_borde";
+            // Escribimos
             div.appendChild(tabla);
-
         }
 
         /**

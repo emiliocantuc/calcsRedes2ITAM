@@ -4,14 +4,22 @@ input[type='number']{
 } 
 
 
-#resultados table, #resultados td, #resultados th {
+.con_borde, .con_borde td, .con_borde th {
     border: 1px solid black;
 }
-#resultados table {
-    border-collapse: collapse;
+.con_borde {
+    border-collapse: collapse !important;
 }
 
-#resultados td,#resultados th {
+.con_borde td,.con_borde th {
     text-align: center;
     padding: 5px;
-  }
+}
+
+caption{
+    margin-bottom: 8px;
+}
+
+.highlighted{
+    text-decoration: underline;
+}
