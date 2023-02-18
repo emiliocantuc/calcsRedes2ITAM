@@ -186,7 +186,6 @@ function genera_tabla(encabezado,arr,titulo,encabezado_vertical){
 
         for(let j=0;j<arr[i].length;j++){
             let td=document.createElement("td");
-            console.log(arr[i][j]);
             td.innerHTML=arr[i][j];
             renglon.appendChild(td);
         }

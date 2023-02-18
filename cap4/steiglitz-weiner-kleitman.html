@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- JS Utils -->
+    <script src="../utils.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../style.css">
+
+    <title>Heurística de Steiglitz-Weiner-Kleitman</title>
+</head>
+<body>
+    <!-- Intro/Explicacion -->
+    <h1>Heurística de Steiglitz-Weiner-Kleitmanl</h1>
+    <a target="_blank" href="https://jincera.github.io/LibroDisRedes/dise%C3%B1o-l%C3%B3gico-de-la-red.html#heur%C3%ADstica-de-steiglitz-weiner-kleitman">Ver en Notas</a>
+    <h2>Algoritmo</h2>
+    <ol>
+        <li>Se enumeran los nodos de manera aleatoria.</li>
+       <li>Asigna a todos los nodos un déficit (número de interfaces que no han sido asignadas a enlaces) igual al grado k deseado.</li>
+        <li>Selecciona el nodo con el déficit más alto. Si hay varios candidatos, selecciona el que tiene el menor identificador.</li>
+        <li>Enlaza este nodo con el nodo con el mayor déficit entre los no adyacentes. Si hay varios candidatos, selecciona el más cercano (menor costo).
+            <br> Si hay varios candidatos, se selecciona el que tiene el identificador menor.
+            <br> Al hacer el enlace, se decrementa el déficit en cada uno de estos nodos.</li>
+        <li>Continúa desde el punto 3 hasta que todos los nodos tengan un déficit menor o igual a cero.
+            <br>Algunos nodos pueden tener un déficit negativo, lo que se ajustará posteriormente.</li>
+
+    </ol>
+    <br>
+
+    <!-- Input de Matriz de Adyacencia -->
+    <h2>Calculadora</h2>
+    Ingresa la matriz de costos c_ij (donde el nodo 1 es el concentrador).
+    <br><br>
+    Número de nodos: <input id="n_nodos_input" onchange="update_inputs()"  type="number" value="10"/>
+    Simétrica: <input id="simetric_matrix"  onchange="update_inputs()" type="checkbox" checked disabled/>
+    <input type="button" value="Llena al azar" onclick="llena_al_azar()"/>
+    <input type="button" value="Llena con ejemplo" onclick="llena_con_ejemplo()"/>
+
+    <br><br>
+    <div id="matrix_input"></div>
+    <br>
+
+    <!-- Inputs particulares al algoritmo -->
+    <br>
+    K (# de fallas a tolerar + 1) = <input type="number" id="k"/>
+    <br><br>
+    <input type="button" value="Resolver" onclick="resolver()"/>
+    <br><br>
+    
+    <!-- Resultados -->
+    <div id="resultados">
+        <div id="tabla_diferencias"></div>
+        <br>
+        <div id="tabla_output"></div>
+        <br>
+        <div id="costo_final"></div>
+
+        <br>
+        <div id="paso_a_paso"></div>
+    </div>
+
+    <br><br><br>
+
+    <!-- Script principal -->
+    <script>
+        function update_inputs(){
+            update_matrix_input();
+            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+            let p=document.createElement("p");
+            for(let i=0;i<n_nodos;i++){
+                let but=document.createElement("button");
+                but.type="number";
+
+            }
+        }
+
+        function update_trafico_input(){
+            // Borramos todos los hijos antes de agregar
+            let div=document.getElementById("trafico_nodos_input");
+            div.innerHTML="<br>";
+
+            let considera_trafico=document.getElementById("considera_trafico").checked;
+            if(considera_trafico){
+                try{
+                    let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+                    if(n_nodos<=0){
+                        alert("Ingresa un entero positivo para el # de nodos");
+                        return null;
+                    }
+                    let arr=[];
+                    for(let i=0;i<n_nodos;i++){
+                        let inp=document.createElement("input");
+                        inp.type="number";
+                        inp.id="trafico_de_"+i;
+                        arr.push([i+1,inp.outerHTML]);
+                    }
+                    console.log(arr);
+                    let tabla=genera_tabla(["Nodo","Tráfico"],arr);
+                    tabla.className="con_borde";
+                    div.appendChild(tabla);
+
+                    let cap_max=document.createElement("input");
+                    cap_max.type="number";
+                    cap_max.id="capacidad_maxima";
+
+                    let temp=document.createElement("p");
+                    temp.textContent="Capacidad máxima: ";
+                    temp.appendChild(cap_max);
+
+                    div.appendChild(temp);
+                }catch(e){
+                    alert("Ingresa un entero positivo para el # de nodos");
+                }
+            }
+            
+        }
+
+        /**
+         * Llena la matriz de entrada con el ejemplo de las notas.
+         */
+        function llena_con_ejemplo(){
+            let arr=[[0,1,1,1,1],[1,0,1,1,1],[1,1,0,1,1],[1,1,1,0,1],[1,1,1,1,0]];
+            document.getElementById("n_nodos_input").value=5;
+            document.getElementById("simetric_matrix").checked=true;
+            document.getElementById("k").value=3;
+            update_matrix_input();
+            llenar_de_arr(arr);
+        }
+
+
+        /**
+         * Despliega la tabla de output sobre el documento.
+         * @param {Object} dict 'output' encontrado en resuelve()
+         */
+         function despliega_tabla_output(arr){
+            let div=document.getElementById("tabla_output");
+            // Primero vaciamos
+            div.innerHTML="";
+            // Encabezados
+            let encabezado=[];
+            for(let i=1;i<=arr[0].length;i++)
+                encabezado.push(i);
+
+            // Modificamos arreglo
+            for(let i=0;i<arr.length;i++){
+                for(let j=0;j<arr[i].length;j++){
+                    if(arr[i][j]<=0){
+                        arr[i][j]="";
+                    }
+                }
+            }
+
+            let tabla=genera_tabla(encabezado,arr,"Topologia Final",encabezado);
+            tabla.className="con_borde";
+            // Escribimos
+            div.appendChild(tabla);
+        }
+
+        function coords_ord_menor_costo(arr){
+            let coords=[];
+            // Asumimos simetria
+            for(let i=0;i<arr.length;i++){
+                for(let j=i;j<arr[i].length;j++){
+                    if(i>=j) continue;
+                    let valor=parseFloat(arr[i][j]);
+                    if(!isNaN(valor)){
+                        coords.push([i,j]);
+                    }
+                }
+            }
+            coords.sort(([ai,aj],[bi,bj])=>arr[ai][aj]-arr[bi][bj]);
+            return coords;
+
+        }
+
+        function calcula_costo(costos,conexiones,two_way){
+            let out=0;
+            for(let i=0;i<costos.length;i++){
+                for(let j=0;j<costos[i].length;j++){
+                    if(conexiones[i][j]>0){
+                        out+=costos[i][j];
+                    }
+                }
+            }
+            return two_way?out/2:out;
+
+        }
+
+        function find_set(sets,a){
+            let i=0;
+            for(let set of sets){
+                if(set.includes(a)){
+                    return [set,i];
+                }
+                i++;
+            }
+            return [null,-1];
+        }
+
+        function remove_from_list(l,indices){
+            let copia_l=JSON.parse(JSON.stringify(l));
+            let out=[];
+            for(let i=0;i<l.length;i++){
+                if(!indices.includes(i)){
+                    out.push(copia_l[i]);
+                }
+            }
+            return out;
+
+        }
+
+        function union(a,b){
+            let out=[];
+            for(let i of a){
+                if(!out.includes(i)){
+                    out.push(i);
+                }
+            }
+            for(let i of b){
+                if(!out.includes(i)){
+                    out.push(i);
+                }
+            }
+            return out;
+        }
+
+        function suma_capacidad_subarbol(subarbol,capacidades){
+            let suma=0;
+            for(let nodo of subarbol){
+                if(nodo in capacidades){
+                    suma+=capacidades[nodo];
+                }
+            }
+            return suma;
+        }
+
+        function shuffle(arr){
+            let unshuffled=JSON.parse(JSON.stringify(arr));
+            let shuffled = unshuffled
+            .map(value => ({ value, sort: Math.random() }))
+            .sort((a, b) => a.sort - b.sort)
+            .map(({ value }) => value)
+        
+            return shuffled;
+        }
+
+        function arg_max(arr,exclude){
+            let best=null;
+            let highest=0;
+            for(let i=1;i<arr.length;i++){
+                if(exclude!==undefined && exclude.includes(i))
+                    continue;
+                if(best==null || arr[i]>highest){
+                    best=i;
+                    highest=arr[i];
+                }
+            }
+            return best;
+        }
+
+        function adyacentes(nodo,conexiones){
+            let out=[];
+            // Todos los indices en el renglon nodo que son 1
+            for(let i=0;i<conexiones.length;i++){
+                if(conexiones[nodo][i]==1){
+                    out.push(i);
+                }
+            }
+            return out;
+        }
+
+        function arg_all(f,arr,exlude,include){
+            // exlude: list of indices in arr to ignore
+            // f: Math.max/Math.min
+            // arr: array 
+            let arr_=arr;
+            if(exlude!==undefined || include!==undefined){
+                arr_=[];
+                for(let i=0;i<arr.length;i++){
+                    if((exlude!==undefined && !exlude.includes(i))||(include!==undefined && include.includes(i))){
+                        arr_.push(arr[i]);
+                    }
+                }
+            }
+            let out=[];
+            let best=f(...arr_);
+            for(let i=0;i<arr.length;i++){
+                if((exlude!==undefined && exlude.includes(i))||(include!==undefined && !include.includes(i)))
+                    continue;
+                if(arr[i]==best){
+                    out.push(i);
+                }
+            }
+            return out;
+        }
+
+        function algun_deficit_positivo(defs){
+            for(let i of defs){
+                if(i>0){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function agrega_a_paso_a_paso(html){
+            let div=document.getElementById('paso_a_paso');
+            div.innerHTML+=html+'<br>';
+        }
+
+        function inc_arr(arr){
+            let out=[];
+            for(let i of arr)
+                out.push(i+1);
+            return out;
+        }
+
+        /**
+         * Callback del boton 'Resolver'. Lee entradas, aplica algoritmo
+         * y manda a escribir resultados.
+         */
+        function resolver(){
+            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+            let k=parseInt(document.getElementById("k").value);
+            if(isNaN(k) || k<=0){
+                alert('Ingresa un valor valido de K');
+                return null;
+            }
+
+            // Leemos matriz de entrada (de costos)
+            let arr=cargar_matriz_de_entrada(n_nodos);
+            console.log(arr);
+            if(arr==null){
+                return null;
+            }
+
+            // Asignamos ids aleatoreamente y deficits = k
+            // TODO display
+            let ids=[];
+            let deficits=[];
+            for(let nodo=0;nodo<n_nodos;nodo++){
+                ids.push(nodo);
+                deficits.push(k);
+            }
+            ids=shuffle(ids);
+
+            let output=matriz_de_ceros(n_nodos,n_nodos);
+            console.log('ids',ids);
+            let iter=1;
+
+            agrega_a_paso_a_paso('Asignamos ids aleatoriamente: '+inc_arr(ids).join(', ')+'<br>');
+
+            while(algun_deficit_positivo(deficits)){
+            
+                agrega_a_paso_a_paso('<br><b>Iter '+iter+'</b><br>');
+                agrega_a_paso_a_paso('Los déficits son: '+deficits.join(', '));
+                console.log('deficits',deficits)
+
+                // Encuentra nodo con deficit mas alto
+                let defs_mas_altos=arg_all(Math.max,deficits);
+                console.log('def mas altos',defs_mas_altos)
+                let primero=arg_all(Math.min,ids,undefined,defs_mas_altos)[0];
+                console.log('primero',primero);
+
+                agrega_a_paso_a_paso('Los nodos con los déficits más altos son: '+inc_arr(defs_mas_altos).join(', '));
+                agrega_a_paso_a_paso('Escogemos el de id más bajo: '+(primero+1));
+                
+                // Encuentra nodo con deficit mas alto que no sea adyacente a primero
+                let adys=adyacentes(primero,output);
+                adys.push(primero);
+                console.log('excluimos',adys);
+                let mayores_deficits=arg_all(Math.max,deficits,adys);
+                console.log('mayores deficits',mayores_deficits);
+
+                agrega_a_paso_a_paso('Los nodos con los déficits más altos no adyacentes son: '+inc_arr(mayores_deficits).join(', '));
+                
+                // Renglon de arr correspondiente a primero
+                let cercanias=[];
+                for(let i=0;i<n_nodos;i++)
+                    cercanias.push(arr[primero][i]);
+
+                let mas_cercanos=arg_all(Math.min,cercanias,undefined,mayores_deficits);
+                console.log('mas cercanos',mas_cercanos);
+                agrega_a_paso_a_paso('De esos los más cercanos son: '+inc_arr(mas_cercanos).join(', '));
+                
+
+                // Escogemos el de mas_cercanos de id mas bajo
+                let match = arg_all(Math.min,ids,undefined,mas_cercanos)[0];
+                agrega_a_paso_a_paso('Escogemos el de id más bajo: '+(match+1));
+                console.log('match',match);
+
+                // Hacemos conexion
+                agrega_a_paso_a_paso('Hacemos conexión '+(primero+1)+' <--> '+(match+1)+' y disminuimos sus déficits');
+                output[primero][match]=1;
+                output[match][primero]=1;
+                deficits[primero]--;
+                deficits[match]--;
+                
+                iter++;
+
+                let copia_out=JSON.parse(JSON.stringify(output));
+                console.log(copia_out);
+            }
+            let costo_final=calcula_costo(arr,output,true);
+            document.getElementById('costo_final').innerHTML='Costo Final: '+costo_final+'<br>';
+
+            agrega_a_paso_a_paso('<br><br>Terminamos porque los deficits son: '+deficits.join(', '));
+            let copia_out=JSON.parse(JSON.stringify(output));
+            console.log(copia_out);
+            despliega_tabla_output(copia_out);
+            
+            
+        }
+
+        // MAIN
+        update_matrix_input();
+    </script>
+
+
+    
+</body>
+</html>

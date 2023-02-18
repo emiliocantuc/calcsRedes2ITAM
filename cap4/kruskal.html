@@ -95,7 +95,7 @@
                         inp.id="trafico_de_"+i;
                         arr.push([i+1,inp.outerHTML]);
                     }
-                    console.log(arr);
+
                     let tabla=genera_tabla(["Nodo","Tráfico"],arr);
                     tabla.className="con_borde";
                     div.appendChild(tabla);
@@ -269,9 +269,7 @@
                         return null;
                     }
                     capacidades.push(v);
-                }
-                console.log('capacidades',capacidades);
-                    
+                }   
             }
 
             // Leemos matriz de entrada (de costos)
@@ -281,17 +279,15 @@
             }
 
             // 
-            let forest=[];//disjointSet();
+            let forest=[];
             let S=[]
             for(let i=0;i<n_nodos;i++){
                     forest.push([i]);
             }
             
-           
-            console.log('forest')
-            console.log(forest);
+
             let por_menor_costo=coords_ord_menor_costo(arr);
-            console.log(por_menor_costo);
+
             let output=matriz_de_ceros(n_nodos,n_nodos);
 
             let n_added=0;
@@ -302,8 +298,6 @@
                 }
                 let [set_u,i_set_u]=find_set(forest,u);
                 let [set_v,i_set_v]=find_set(forest,v);
-
-                console.log(u,v,set_u,set_v);
 
                 if(set_u==null || set_v==null)
                     alert('algo salio mal');
@@ -322,10 +316,6 @@
                     // Agregamos la union
                     forest.push(union(set_u,set_v));
 
-                    console.log('union');
-                    console.log(union(set_u,set_v));
-                    console.log(forest);
-
                     // Agregamos edge a output
                     output[u][v]=1;
                     output[v][u]=1;
@@ -337,10 +327,7 @@
             if(n_added!=(n_nodos-1)){
                 alert('Warning: Solo se pudieron agregar '+n_added+' aristas y se necesitan '+(n_nodos-1)+' para formar ST.');
             }
-            console.log('forest');
-            console.log(forest);
 
-            console.log(output);
             let copia_out=JSON.parse(JSON.stringify(output));
             despliega_tabla_output(copia_out);
             
@@ -349,7 +336,6 @@
 
         // MAIN
         update_matrix_input();
-        llena_con_ejemplo();
     </script>
 
 
