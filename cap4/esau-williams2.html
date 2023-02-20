@@ -11,8 +11,8 @@
     <!-- CSS -->
     <link rel="stylesheet" href="../style.css">
 
-    <title>Algoritmo de Kruskal</title>
-    
+    <title>Algoritmo de Esau-Williams</title>
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-8JQGE315H4"></script>
     <script>
@@ -25,17 +25,14 @@
 </head>
 <body>
     <!-- Intro/Explicacion -->
-    <h1>Algoritmo de Kruskal</h1>
-    <a target="_blank" href="https://jincera.github.io/LibroDisRedes/dise%C3%B1o-l%C3%B3gico-de-la-red.html#algoritmo-de-kruskal">Ver en Notas</a>
-    | <a target="_blank" href="https://en.wikipedia.org/wiki/Kruskal%27s_algorithm">Wikipedia</a>
+    <h1>Algoritmo de Esau-Williams</h1>
+    <a target="_blank" href="https://jincera.github.io/LibroDisRedes/dise%C3%B1o-l%C3%B3gico-de-la-red.html#algoritmo-de-esau-williams">Ver en Notas</a>
+    | <a target="_blank" href="https://en.wikipedia.org/wiki/Capacitated_minimum_spanning_tree">Wikipedia</a>
     <h2>Algoritmo</h2>
     <ol>
-        <li>Ordene las aristas en orden no decreciente de acuerdo a su costo.</li>
-        <li>Elija la arista más barata. Checa si agregarlo formaría un ciclo con el árbol formado hasta ahora.
-            <br>Si no se forma ciclo (y si la suma de los pesos de los subárboles a unir no rebasa la capacidad máxima si se considera el tráfico),
-            <br>incluya la arista.
-        </li>
-        <li>Repita el paso 2 hasta que haya aristas (V-1) en el árbol de expansión.</li>
+        <li>Se inicia con todos los nodos conectados en estrella con el concentrador.</li>
+        <li>Se calcula una matriz de diferencias d_ij = c_ij - c_i1
+            <br>(diferencia resultante de conectar el nodo i al j en vez de conectarlo al concentrador).</li>
     </ol>
     <br>
 
@@ -44,7 +41,7 @@
     Ingresa la matriz de costos c_ij (donde el nodo 1 es el concentrador).
     <br><br>
     Número de nodos: <input id="n_nodos_input" onchange="update_inputs()"  type="number" value="10"/>
-    Simétrica: <input id="simetric_matrix"  onchange="update_inputs()" type="checkbox" checked disabled/>
+    Simétrica: <input id="simetric_matrix"  onchange="update_matrix_input()" type="checkbox"/>
     <input type="button" value="Llena al azar" onclick="llena_al_azar()"/>
     <input type="button" value="Llena con ejemplo" onclick="llena_con_ejemplo()"/>
 
@@ -54,11 +51,10 @@
 
     <!-- Inputs particulares al algoritmo -->
     <br>
-    Consideraciones de tráfico  <input id="considera_trafico"  onchange="update_trafico_input()" type="checkbox"/>
+    Consideraciones de tráfico  <input id="considera_trafico"  onchange="update_trafico_input()" type="checkbox" unchecked/>
     <br>
     <div id="trafico_nodos_input"></div>
     <br>
-
     <input type="button" value="Resolver" onclick="resolver()"/>
     <br><br>
 
@@ -66,6 +62,8 @@
         <div id="tabla_diferencias"></div>
         <br>
         <div id="tabla_output"></div>
+        <br>
+        <div id="costo_original"></div>
         <br>
         <div id="costo_final"></div>
     </div>
@@ -94,7 +92,7 @@
             if(considera_trafico){
                 try{
                     let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
-                    if(n_nodos<=0){
+                    if(n_nodos<0){
                         alert("Ingresa un entero positivo para el # de nodos");
                         return null;
                     }
@@ -120,7 +118,6 @@
 
                     div.appendChild(temp);
                 }catch(e){
-                    console.log(e);
                     alert("Ingresa un entero positivo para el # de nodos");
                 }
             }
@@ -142,11 +139,41 @@
                 [59,62,55,50,95,42,78,0]
             ];
             document.getElementById("n_nodos_input").value=8;
-            document.getElementById("simetric_matrix").checked=true;
+            document.getElementById("simetric_matrix").checked=false;
             update_matrix_input();
             llenar_de_arr(matriz_ejemplo);
         }
 
+
+        /**
+         * Despliega la tabla de diferencias sobre el documento.
+         * @param {Object} dict 'diferencias' encontrado en resuelve()
+         */
+        function despliega_tabla_diferencias(diffs){
+            let div=document.getElementById("tabla_diferencias");
+            // Primero vaciamos
+            div.innerHTML="";
+            // Encabezados
+            let encabezado=[];
+            for(let i=1;i<=diffs[0].length;i++)
+                encabezado.push(i);
+            let encabezado_vertical=encabezado.slice(1);
+
+            // Modificamos arreglo
+            let arr=diffs.slice(1);
+            for(let i=1;i<arr.length;i++){
+                for(let j=0;j<arr[i].length;j++){
+                    if(arr[i][j]<0){
+                        arr[i][j]="<b>"+arr[i][j]+"</b>";
+                    }
+                }
+            }
+
+            let tabla=genera_tabla(encabezado,arr,"Matriz de diferencias",encabezado_vertical);
+            tabla.className='con_borde';
+            // Escribimos
+            div.appendChild(tabla);
+        }
 
         /**
          * Despliega la tabla de output sobre el documento.
@@ -171,24 +198,26 @@
             }
 
             let tabla=genera_tabla(encabezado,arr,"Topologia Final",encabezado);
-            tabla.className="con_borde";
+            tabla.className='con_borde';
             // Escribimos
             div.appendChild(tabla);
         }
 
-        function coords_ord_menor_costo(arr){
+        function coordsMenor(arr){
             let coords=[];
-            // Asumimos simetria
             for(let i=0;i<arr.length;i++){
-                for(let j=i;j<arr[i].length;j++){
-                    if(i>=j) continue;
+                for(let j=0;j<arr[i].length;j++){
                     let valor=parseFloat(arr[i][j]);
                     if(!isNaN(valor)){
-                        coords.push([i,j]);
+                        if(valor<0 && (arr[i][j]<arr[j][i] || (arr[i][j]==arr[j][i]))){
+                            coords.push([i,j]);
+                        }
                     }
                 }
             }
+            
             coords.sort(([ai,aj],[bi,bj])=>arr[ai][aj]-arr[bi][bj]);
+            console.log('coords',coords);
             return coords;
 
         }
@@ -206,42 +235,24 @@
 
         }
 
-        function find_set(sets,a){
+        function en_mismo_subarbol(subarboles,a,b){
+            for(let subarbol of subarboles){
+                if(subarbol.includes(a) && subarbol.includes(b)){
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function subarbol_de(subarboles,a){
             let i=0;
-            for(let set of sets){
-                if(set.includes(a)){
-                    return [set,i];
+            for(let subarbol of subarboles){
+                if(subarbol.includes(a)){
+                    return [subarbol,i];
                 }
                 i++;
             }
-            return [null,-1];
-        }
-
-        function remove_from_list(l,indices){
-            let copia_l=JSON.parse(JSON.stringify(l));
-            let out=[];
-            for(let i=0;i<l.length;i++){
-                if(!indices.includes(i)){
-                    out.push(copia_l[i]);
-                }
-            }
-            return out;
-
-        }
-
-        function union(a,b){
-            let out=[];
-            for(let i of a){
-                if(!out.includes(i)){
-                    out.push(i);
-                }
-            }
-            for(let i of b){
-                if(!out.includes(i)){
-                    out.push(i);
-                }
-            }
-            return out;
+            return null;
         }
 
         function suma_capacidad_subarbol(subarbol,capacidades){
@@ -254,19 +265,35 @@
             return suma;
         }
 
+        function obten_gates(output,subarboles){
+            let gates=[];
+            // Para cada subarbol encontramos su gate
+            let i=0;
+            for(let subarbol of subarboles){
+                for(let nodo of subarbol){
+                    // Si esta conectado con la raiz es el gate
+                    if(output[nodo][0]){
+                        gates[i]=nodo;
+                    }
+                }
+                i++;
+            }
+            return gates;
+        }
+
 
         /**
          * Callback del boton 'Resolver'. Lee entradas, aplica algoritmo
          * y manda a escribir resultados.
          */
         function resolver(){
-            // DBE SER SIMETRICA
+            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
 
             let considera_trafico=document.getElementById("considera_trafico").checked;
-            let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
             let capacidades=null;
             let capacidad_maxima=0;
             if(considera_trafico){
+                console.log('considerando trafico...');
                 capacidad_maxima=parseFloat(document.getElementById("capacidad_maxima").value);
                 if(isNaN(capacidad_maxima) || capacidad_maxima<=0){
                         alert('Ingresa capacidad maxima valida');
@@ -275,13 +302,14 @@
                 capacidades={};
                 for(let i=0;i<n_nodos;i++){
                     let v=parseFloat(document.getElementById("trafico_de_"+i).value);
-                    console.log(v);
                     if(isNaN(v) || v<0){
                         alert('Ingresa trafico valido para nodo '+(i+1));
                         return null;
                     }
                     capacidades[i]=v;
                 }   
+                console.log('capacidades',capacidades);
+                console.log(capacidad_maxima);
             }
 
             // Leemos matriz de entrada (de costos)
@@ -290,68 +318,113 @@
                 return null;
             }
 
-            // 
-            let forest=[];
-            let S=[]
-            for(let i=0;i<n_nodos;i++){
-                    forest.push([i]);
-            }
-            
-
-            let por_menor_costo=coords_ord_menor_costo(arr);
-
-            let output=matriz_de_ceros(n_nodos,n_nodos);
-
-            let n_added=0;
-            for(let [u,v] of por_menor_costo){
-                // Agregamos solo n_nodos-1 aristas
-                if(n_added>n_nodos-1){
-                    break;
+            // Calculamos las diferencias
+            let diferencias=[];
+            for(let i=0;i<arr.length;i++){
+                diferencias[i]=[];
+                for(let j=0;j<arr[i].length;j++){
+                    if(i==j){
+                        diferencias[i][j]='-';
+                    }else{
+                        diferencias[i][j]=(arr[i][j]-arr[i][0]);
+                    }
                 }
-                let [set_u,i_set_u]=find_set(forest,u);
-                let [set_v,i_set_v]=find_set(forest,v);
+                   
+            }
+            console.log('diferencias',diferencias);
 
-                if(set_u==null || set_v==null)
-                    alert('algo salio mal');
+            // Calculamos el costo y planeamos salida
+            let output=matriz_de_ceros(n_nodos,n_nodos);
+            let subarboles=[];
+            // Conectamos todos los nodos al concentrador en estrella
+            for(let i=1;i<n_nodos;i++){
+                output[i][0]=1;
+                output[0][i]=1;
+                subarboles.push([i]);
+            }
 
-                let trafico_u=suma_capacidad_subarbol(set_u,capacidades);
-                let trafico_v=suma_capacidad_subarbol(set_v,capacidades);
+            let costo_original=calcula_costo(arr,output,true);
+            console.log('costo original',costo_original);
+            console.log(output);
+            console.log('subarboles',subarboles);
 
-                console.log('trafico i y j: ',trafico_i,trafico_j);
-                if(considera_trafico && capacidades!=null && trafico_u+trafico_v>capacidad_maxima){
+            let excluye=[];
+ 
+            
+            for([j,i] of coordsMenor(diferencias)){
+                
+                console.log("j,i",[j,i]);
+
+
+                // Checa si estan en subarboles distintos
+                if(en_mismo_subarbol(subarboles,i,j) || excluye.includes(j)){
+                    console.log('en mismo subarbol...');
                     continue;
                 }
-                
-                if(i_set_u!=i_set_v){
-                    //F:= F ∪ {(u, v)} ∪ {(v, u)}
-                    //UNION(FIND-SET(u), FIND-SET(v))
+                // Checa si la suma de los subarboles es mayor a la capacidad maxima
+                let [sub_i,ix_i]=subarbol_de(subarboles,i);
+                let [sub_j,ix_j]=subarbol_de(subarboles,j);
+                console.log('subarbol de i',sub_i,ix_i);
+                console.log('subarbol de j',sub_j,ix_j);
 
-                    // Quitamos set_u y set_v de forest
-                    forest=remove_from_list(forest,[i_set_u,i_set_v]);
+                let trafico_i=suma_capacidad_subarbol(sub_i,capacidades);
+                let trafico_j=suma_capacidad_subarbol(sub_j,capacidades);
 
-                    // Agregamos la union
-                    forest.push(union(set_u,set_v));
-
-                    // Agregamos edge a output
-                    output[u][v]=1;
-                    output[v][u]=1;
-                    n_added++;
-
+                console.log('trafico i y j: ',trafico_i,trafico_j);
+                if(considera_trafico && trafico_i+trafico_j>capacidad_maxima){
+                    console.log('exede cap maxima');
+                    continue;
                 }
 
+                let copia_output=JSON.parse(JSON.stringify(output));
+
+                // Hacemos la conexion j -> i (simetrica)
+                copia_output[j][i]=1;
+                copia_output[i][j]=1;
+
+                // Deshacemos la conexion j -> raiz
+                console.log('borrando conexion con raiz de ',j);
+                copia_output[j][0]=0;
+                copia_output[0][j]=0;
+
+                // Ya no podemos conectar a j
+                excluye.push(j);
+
+                console.log('output',copia_output);
+                console.log('con costo:',calcula_costo(arr,copia_output,true));
+                output=copia_output;
+
+                // Actualizamos subarboles
+                let copia_subarboles=JSON.parse(JSON.stringify(subarboles));
+
+                // Agregamos todos los elementos del subarbol de j al de i
+                for(let n of sub_j)
+                    copia_subarboles[ix_i].push(n);
+
+                // Borramos el subarbol de j
+                copia_subarboles.splice(ix_j,1);
+                console.log('sub after');
+                console.log(copia_subarboles);
+
+                subarboles=copia_subarboles;                
+
             }
-            if(n_added!=(n_nodos-1)){
-                alert('Warning: Solo se pudieron agregar '+n_added+' aristas y se necesitan '+(n_nodos-1)+' para formar ST.');
-            }
+            
+            let costo_final=calcula_costo(arr,output,true);
+            let copia_diffs=JSON.parse(JSON.stringify(diferencias));
+            despliega_tabla_diferencias(copia_diffs);
 
             let copia_out=JSON.parse(JSON.stringify(output));
             despliega_tabla_output(copia_out);
-            
+
+            document.getElementById("costo_original").innerHTML="Costo original: "+costo_original;
+            document.getElementById("costo_final").innerHTML="Costo final: "+costo_final;
             
         }
 
         // MAIN
         update_matrix_input();
+        llena_con_ejemplo();
     </script>
 
 

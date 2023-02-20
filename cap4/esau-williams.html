@@ -50,7 +50,11 @@
     <br>
 
     <!-- Inputs particulares al algoritmo -->
+    <br>
+    Consideraciones de tráfico  <input id="considera_trafico"  onchange="update_trafico_input()" type="checkbox" unchecked/>
+    <br>
     <div id="trafico_nodos_input"></div>
+    <br>
     <input type="button" value="Resolver" onclick="resolver()"/>
     <br><br>
 
@@ -77,6 +81,47 @@
                 but.type="number";
 
             }
+        }
+
+        function update_trafico_input(){
+            // Borramos todos los hijos antes de agregar
+            let div=document.getElementById("trafico_nodos_input");
+            div.innerHTML="<br>";
+
+            let considera_trafico=document.getElementById("considera_trafico").checked;
+            if(considera_trafico){
+                try{
+                    let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
+                    if(n_nodos<0){
+                        alert("Ingresa un entero positivo para el # de nodos");
+                        return null;
+                    }
+                    let arr=[];
+                    for(let i=0;i<n_nodos;i++){
+                        let inp=document.createElement("input");
+                        inp.type="number";
+                        inp.id="trafico_de_"+i;
+                        arr.push([i+1,inp.outerHTML]);
+                    }
+
+                    let tabla=genera_tabla(["Nodo","Tráfico"],arr);
+                    tabla.className="con_borde";
+                    div.appendChild(tabla);
+
+                    let cap_max=document.createElement("input");
+                    cap_max.type="number";
+                    cap_max.id="capacidad_maxima";
+
+                    let temp=document.createElement("p");
+                    temp.textContent="Capacidad máxima: ";
+                    temp.appendChild(cap_max);
+
+                    div.appendChild(temp);
+                }catch(e){
+                    alert("Ingresa un entero positivo para el # de nodos");
+                }
+            }
+            
         }
 
         /**
@@ -125,6 +170,7 @@
             }
 
             let tabla=genera_tabla(encabezado,arr,"Matriz de diferencias",encabezado_vertical);
+            tabla.className='con_borde';
             // Escribimos
             div.appendChild(tabla);
         }
@@ -152,6 +198,7 @@
             }
 
             let tabla=genera_tabla(encabezado,arr,"Topologia Final",encabezado);
+            tabla.className='con_borde';
             // Escribimos
             div.appendChild(tabla);
         }
@@ -230,7 +277,7 @@
         function suma_capacidad_subarbol(subarbol,capacidades){
             let suma=0;
             for(let nodo of subarbol){
-                if(nodo in capacidades){
+                if(capacidades.includes(nodo)){
                     suma+=capacidades[nodo];
                 }
             }
@@ -261,6 +308,26 @@
         function resolver(){
             let n_nodos=parseInt(document.getElementById("n_nodos_input").value);
 
+            let considera_trafico=document.getElementById("considera_trafico").checked;
+            let capacidades=null;
+            let capacidad_maxima=0;
+            if(considera_trafico){
+                capacidad_maxima=parseFloat(document.getElementById("capacidad_maxima").value);
+                if(isNaN(capacidad_maxima) || capacidad_maxima<=0){
+                        alert('Ingresa capacidad maxima valida');
+                        return null;
+                }
+                capacidades=[];
+                for(let i=0;i<n_nodos;i++){
+                    let v=parseFloat(document.getElementById("trafico_de_"+i).value);
+                    if(isNaN(v) || v<0){
+                        alert('Ingresa trafico valido para nodo '+(i+1));
+                        return null;
+                    }
+                    capacidades.push(v);
+                }   
+            }
+
             // Leemos matriz de entrada (de costos)
             let arr=cargar_matriz_de_entrada(n_nodos);
             if(arr==null){
@@ -280,6 +347,7 @@
                 }
                    
             }
+            console.log('diferencias',diferencias);
 
             // Calculamos el costo y planeamos salida
             let output=matriz_de_ceros(n_nodos,n_nodos);
@@ -287,16 +355,15 @@
             // Conectamos todos los nodos al concentrador en estrella
             for(let i=1;i<n_nodos;i++){
                 output[i][0]=1;
-                //output[0][i]=1;
+                output[0][i]=1;
                 subarboles.push([i]);
             }
 
-            let costo_original=calcula_costo(arr,output,false);
+            let costo_original=calcula_costo(arr,output,true);
+            console.log('costo original',costo_original);
             console.log(output);
-            console.log(subarboles);
+            console.log('subarboles',subarboles);
 
-            let con_capacidad_maxima=false;
-            let Q=19;
             let excluye=matriz_de_ceros(n_nodos,n_nodos);
 
             
@@ -324,7 +391,7 @@
                 let [sub_j,ix_j]=subarbol_de(subarboles,j);
                 console.log('subarbol de i',sub_i,ix_i);
                 console.log('subarbol de j',sub_j,ix_j);
-                if(con_capacidad_maxima && suma_capacidad_subarbol(sub_i)+suma_capacidad_subarbol(sub_j)>Q){
+                if(considera_trafico && suma_capacidad_subarbol(sub_i,capacidades)+suma_capacidad_subarbol(sub_j,capacidades)>capacidad_maxima){
                     console.log('exede cap maxima');
                     continue;
                 }
@@ -333,7 +400,7 @@
 
                 // Hacemos la conexion j -> i (simetrica)
                 copia_output[j][i]=1;
-                //copia_output[i][j]=1;
+                copia_output[i][j]=1;
 
                 // Deshacemos la conexion gate(j) -> raiz
                 console.log('gates',gates);
@@ -341,9 +408,10 @@
                 let gate_i=gates[ix_i];
                 console.log('borrando conexion con raiz de ',gate_j);
                 copia_output[gate_j][0]=0;
-                //copia_output[0][gate_j]=0;
+                copia_output[0][gate_j]=0;
 
                 console.log('output',copia_output);
+                console.log('con costo:',calcula_costo(arr,copia_output,true));
                 output=copia_output;
 
                 // Actualizamos subarboles
@@ -369,7 +437,9 @@
                         if(k==0 || sub_i.includes(k) || sub_j.includes(k))
                             continue;
 
-                        console.log('aqui');
+                        console.log('Gate de j:',gate_j);
+                        console.log('Gate de i:',gate_i);
+                        console.log('Actualizamos '+k+','+l+'+=  '+arr[gate_j][0]+' - '+arr[gate_i][0]);
                         
                         copia_diffs[k][l]+= (arr[gate_j][0] - arr[gate_i][0]);
                     }
