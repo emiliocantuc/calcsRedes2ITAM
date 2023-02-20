@@ -30,9 +30,16 @@
     | <a target="_blank" href="https://en.wikipedia.org/wiki/Capacitated_minimum_spanning_tree">Wikipedia</a>
     <h2>Algoritmo</h2>
     <ol>
-        <li>Se inicia con todos los nodos conectados en estrella con el concentrador.</li>
-        <li>Se calcula una matriz de diferencias d_ij = c_ij - c_i1
-            <br>(diferencia resultante de conectar el nodo i al j en vez de conectarlo al concentrador).</li>
+        <li>Inicia con todos los nodos conectados en estrella con el concentrador.</li>
+        <li>Calcula una matriz de diferencias d_ij = c_ij - c_i1
+            <br>(diferencia resultante de conectar el nodo i al j en vez de conectarlo al concentrador).
+        </li>
+        <li>Para todas las conexiones i -> j ordenadas de menor a mayor diferencia agrega la conexión sólo si:</li>
+        <ul>
+            <li>No se ha hecho una conexión de i a cualquier nodo, i -> x.</li>
+            <li>i y j no pertenecen al mismo subárbol, subarbol(i) != subarbol(j).</li>
+            <li>Si la suma de tráfico de los subarboles i y j no rebasa la capacidad máxima del enlace.</li>      
+        </ul>
     </ol>
     <br>
 
