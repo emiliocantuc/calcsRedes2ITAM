@@ -99,7 +99,7 @@
                         return null;
                     }
                     let arr=[];
-                    for(let i=0;i<n_nodos;i++){
+                    for(let i=1;i<n_nodos;i++){
                         let inp=document.createElement("input");
                         inp.type="number";
                         inp.id="trafico_de_"+i;
@@ -247,7 +247,7 @@
         function suma_capacidad_subarbol(subarbol,capacidades){
             let suma=0;
             for(let nodo of subarbol){
-                if(nodo in capacidades){
+                if(capacidades!=null && nodo in capacidades){
                     suma+=capacidades[nodo];
                 }
             }
@@ -273,7 +273,7 @@
                         return null;
                 }
                 capacidades={};
-                for(let i=0;i<n_nodos;i++){
+                for(let i=1;i<n_nodos;i++){
                     let v=parseFloat(document.getElementById("trafico_de_"+i).value);
                     console.log(v);
                     if(isNaN(v) || v<0){
@@ -317,7 +317,7 @@
                 let trafico_u=suma_capacidad_subarbol(set_u,capacidades);
                 let trafico_v=suma_capacidad_subarbol(set_v,capacidades);
 
-                console.log('trafico i y j: ',trafico_i,trafico_j);
+                console.log('trafico i y j: ',trafico_u,trafico_v);
                 if(considera_trafico && capacidades!=null && trafico_u+trafico_v>capacidad_maxima){
                     continue;
                 }
