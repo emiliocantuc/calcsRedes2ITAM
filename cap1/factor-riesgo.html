@@ -52,6 +52,7 @@
 
     <div id="resultados">
         <div id="factor"></div>
+        <div id="expresion"></div>
         <br>
     <br><br><br>
 
@@ -130,16 +131,21 @@
             let n=5;
             let m=5;
 
+            let ops=[];
             let N=0;
             let factor=0;
             for(let i=0;i<n;i++){
                 for(let j=0;j<m;j++){
                     factor+=matriz[i][j]*ponderaciones[i][j];
                     N+=matriz[i][j];
+                    if(matriz[i][j]>0)
+                        ops.push(matriz[i][j]+"*"+ponderaciones[i][j]);
                 }
             }
+
             factor/=N;
             document.getElementById("factor").innerHTML="<b>Factor de Riesgo</b>: "+factor;
+            document.getElementById("expresion").innerHTML="<br>Expresion: <br>Factor = (1/"+N+") ("+ops.join(" + ")+") = "+factor;
             
         }
 
