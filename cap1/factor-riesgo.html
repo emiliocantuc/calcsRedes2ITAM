@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- JS Utils -->
+    <script src="../utils.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../style.css">
+
+    <title>Factor de Riesgo</title>
+    
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8JQGE315H4"></script>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-8JQGE315H4');
+    </script>
+</head>
+<body>
+    <!-- Intro/Explicacion -->
+    <h1>Factor de Riesgo</h1>
+    <a target="_blank" href="https://jincera.github.io/LibroDisRedes/metodolog%C3%ADa-de-dise%C3%B1o-de-redes.html#manejo-de-riesgos">Ver en Notas</a>
+    <h2>Contexto</h2>
+        Para definir el Factor de Riesgo de un proyecto (y definir si se toma o no) generalmente implica:
+        <ol>
+            <li>Definir y llenar una matriz de impacto contra probabilidad.</li> 
+            <li>Definir las ponderaciones de cada celda de la matriz de impacto-probabilidad.</li>
+            <li>Calcular la suma ponderada peso_de_celda[i] * numero_de_riesgos_en_celda[i].</li>
+        </ol>
+    <br>
+
+    <h2>Calculadora</h2>
+    Ingresa <b>el numero de riesgos</b> por nivel de impacto-probabilidad:
+    <br><br>
+    <div id="matriz"></div>
+    <br>
+    Y las <b>ponderaciones</b> de cada celda:
+    <br><br>
+    <div id="ponderaciones"></div>
+    <br>
+    Nota: Valores vacios se asumen 0.<br>
+    <br>
+    <input type="button" value="Resolver" onclick="resolver()"/>
+    <br><br>
+
+    <div id="resultados">
+        <div id="factor"></div>
+        <br>
+    <br><br><br>
+
+    <!-- Script principal -->
+    <script>
+
+        function matriz_impacto_prob(id,titulo){
+            let impactos=["Mínimo","Poco","Mod","Alto","Extremo"];
+            let probabilidades=["Muy probable","Probable","Puede ocurrir","Poco probable","Muy poco probable"];
+            let arr=[];
+            for(let i=0;i<impactos.length;i++){
+                let renglon=[];
+                for(let j=0;j<probabilidades.length;j++){
+                    let inp=document.createElement("input");
+                    inp.type="number";
+                    inp.id=id+i+","+j;
+                    renglon.push(inp.outerHTML);
+                }
+                arr.push(renglon);
+            }
+            return genera_tabla(impactos,arr,titulo,probabilidades);
+        }
+
+        function get_double_matrix(id,errMsg,n,m){
+            let arr=[];
+            for(let i=0;i<n;i++){
+                let renglon=[];
+                for(let j=0;j<m;j++){
+                    let val=parseFloat(document.getElementById(id+i+","+j).value);
+                    console.log('val',val);
+                    if(isNaN(val)){
+                        val=0;
+                    }
+                    renglon.push(val);
+                }
+                arr.push(renglon);
+            }
+            return arr;
+        }
+
+        /**
+         * Llena la matriz de entrada con el ejemplo de las notas.
+         */
+        function llena_con_ejemplo(){
+            let matriz_ejemplo=[
+                [0,2,52,13,45,15,58,59],
+                [2,0,52,14,43,16,58,62],
+                [52,52,0,60,85,41,23,55],
+                [13,14,60,0,50,18,72,50],
+                [45,43,85,50,0,59,81,95],
+                [15,16,41,18,59,0,55,42],
+                [58,58,23,72,81,55,0,78],
+                [59,62,55,50,95,42,78,0]
+            ];
+            document.getElementById("n_nodos_input").value=8;
+            document.getElementById("simetric_matrix").checked=true;
+            update_matrix_input();
+            llenar_de_arr(matriz_ejemplo);
+        }
+
+        /**
+         * Callback del boton 'Resolver'. Lee entradas, aplica algoritmo
+         * y manda a escribir resultados.
+         */
+        function resolver(){
+            // DBE SER SIMETRICA   
+            let matriz=get_double_matrix("matriz_proba_impacto","Inserta valor valido para ",5,5);
+            let ponderaciones=get_double_matrix("matriz_ponderaciones","Inserta valor valido para ",5,5);
+
+            if (matriz==null || ponderaciones==null)
+                return null;
+
+            console.log(matriz);
+            console.log(ponderaciones);
+
+            let n=5;
+            let m=5;
+
+            let N=0;
+            let factor=0;
+            for(let i=0;i<n;i++){
+                for(let j=0;j<m;j++){
+                    factor+=matriz[i][j]*ponderaciones[i][j];
+                    N+=matriz[i][j];
+                }
+            }
+            factor/=N;
+            document.getElementById("factor").innerHTML="<b>Factor de Riesgo</b>: "+factor;
+            
+        }
+
+        // MAIN
+        document.getElementById("matriz").appendChild(matriz_impacto_prob("matriz_proba_impacto",""));
+        document.getElementById("ponderaciones").appendChild(matriz_impacto_prob("matriz_ponderaciones",""));
+    </script>
+
+
+    
+</body>
+</html>
